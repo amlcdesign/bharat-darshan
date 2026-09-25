@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { INDIA_MAP } from "@/data/india-states";
+import { STATE_CODES } from "@/data/state-codes";
 
 const PALETTE = [
   "#8ca88f", "#7f9db4", "#c9a26d", "#b48a7e", "#9aa4b1",
@@ -44,9 +45,17 @@ export function IndiaMap({ query }: { query: string }) {
               tabIndex={0}
               role="link"
               aria-label={`View ${s.name} districts`}
-              onMouseEnter={() => setTip((t) => (t ? { ...t, label: s.name } : null))}
+              onMouseEnter={() =>
+                setTip((t) =>
+                  t ? { ...t, label: `${STATE_CODES[s.id] ?? ""} · ${s.name}`.replace(/^ · /, "") } : t,
+                )
+              }
               onMouseMove={(e) =>
-                setTip({ x: e.clientX, y: e.clientY, label: s.name })
+                setTip({
+                  x: e.clientX,
+                  y: e.clientY,
+                  label: `${STATE_CODES[s.id] ?? ""} · ${s.name}`.replace(/^ · /, ""),
+                })
               }
               onFocus={() => setTip(null)}
               onClick={() => router.push(`/state/${s.id}`)}

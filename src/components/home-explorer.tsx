@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Search, MapPin, ArrowRight } from "lucide-react";
 import { IndiaMap } from "@/components/map/india-map";
 import { INDIA_MAP } from "@/data/india-states";
 import { STATE_INFO } from "@/data/state-info";
+import { STATE_CODES } from "@/data/state-codes";
 
 export function HomeExplorer() {
   const [query, setQuery] = useState("");
@@ -41,31 +43,48 @@ export function HomeExplorer() {
         <IndiaMap query={query} />
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((s) => {
           const info = STATE_INFO[s.id];
+          const code = STATE_CODES[s.id];
           return (
             <Link
               key={s.id}
               href={`/state/${s.id}`}
-              className="paper-card group flex flex-col gap-1.5 p-4 transition hover:-translate-y-0.5 hover:border-[var(--marigold)]"
+              className="paper-card group overflow-hidden transition hover:-translate-y-0.5 hover:border-[var(--marigold)]"
             >
-              <span className="flex items-center justify-between">
-                <span className="font-display text-lg font-semibold text-[var(--ink)]">
-                  {s.name}
-                </span>
-                <ArrowRight className="h-4 w-4 text-[var(--ink-soft)] transition group-hover:translate-x-0.5 group-hover:text-[var(--marigold)]" />
+              <span className="relative block aspect-[16/10] overflow-hidden bg-[var(--paper-deep)]">
+                <Image
+                  src={`/states/${s.id}.jpg`}
+                  alt={`Iconic landmark of ${s.name}`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition duration-500 group-hover:scale-[1.04]"
+                />
+                {code && (
+                  <span className="absolute top-3 left-3 rounded-md bg-[var(--ink)]/90 px-2.5 py-1 font-mono text-sm font-bold tracking-widest text-[var(--paper)]">
+                    {code}
+                  </span>
+                )}
               </span>
-              {info && (
-                <span className="flex items-center gap-1.5 text-xs text-[var(--ink-soft)]">
-                  <MapPin className="h-3 w-3" /> {info.capital}
+              <span className="flex flex-col gap-1.5 p-4">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="font-display text-lg font-semibold text-[var(--ink)]">
+                    {s.name}
+                  </span>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-[var(--ink-soft)] transition group-hover:translate-x-0.5 group-hover:text-[var(--marigold)]" />
                 </span>
-              )}
-              {info && (
-                <span className="line-clamp-2 text-sm text-[var(--ink-soft)]">
-                  {info.knownFor}
-                </span>
-              )}
+                {info && (
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--ink-soft)]">
+                    <MapPin className="h-3 w-3" /> {info.capital}
+                  </span>
+                )}
+                {info && (
+                  <span className="line-clamp-2 text-sm text-[var(--ink-soft)]">
+                    {info.knownFor}
+                  </span>
+                )}
+              </span>
             </Link>
           );
         })}

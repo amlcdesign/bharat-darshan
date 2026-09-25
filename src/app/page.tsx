@@ -35,6 +35,10 @@ export default function Home() {
       <div id="atlas" className="scroll-mt-20">
         <HomeExplorer />
       </div>
+
+      <p className="mx-auto max-w-6xl px-4 pb-10 text-center text-xs text-[var(--ink-soft)]">
+        State imagery via Wikipedia/Wikimedia Commons contributors.
+      </p>
     </main>
   );
 }
