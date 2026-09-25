@@ -1,0 +1,213 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
+const DATA_URL =
+  "https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@main/geojson/india.geojson";
+const CACHE = path.resolve("scripts/.cache/india.geojson");
+const ROOT = path.resolve();
+
+async function loadGeoJSON() {
+  try {
+    const cached = await Bun.file(CACHE).json();
+    console.log("Using cached geojson");
+    return cached;
+  } catch {
+    console.log("Downloading india.geojson ...");
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+    const json = await res.json();
+    await mkdir(path.dirname(CACHE), { recursive: true });
+    await Bun.write(CACHE, JSON.stringify(json));
+    return json;
+  }
+}
+
+const slugify = (s) =>
+  s
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+function collectPoints(geom, out) {
+  const walk = (a) => {
+    if (typeof a[0] === "number") out.push(a);
+    else a.forEach(walk);
+  };
+  walk(geom.coordinates);
+}
+
+function projectAll(features, width) {
+  let minLon = Infinity,
+    maxLon = -Infinity,
+    minLat = Infinity,
+    maxLat = -Infinity;
+  const pts = [];
+  for (const f of features) {
+    const p = [];
+    collectPoints(f.geometry, p);
+    for (const [lon, lat] of p) {
+      if (lon < minLon) minLon = lon;
+      if (lon > maxLon) maxLon = lon;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }
+    pts.push(p);
+  }
+  const cosLat = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180);
+  const spanX = (maxLon - minLon) * cosLat;
+  const spanY = (maxLat - minLat);
+  const scale = width / Math.max(spanX, spanY * 1.0);
+  const height = spanY * scale;
+  const toXY = (lon, lat) => [
+    (lon - minLon) * cosLat * scale,
+    (maxLat - lat) * scale,
+  ];
+  return { toXY, width, height };
+}
+
+function ringsToPaths(geom, toXY, eps, minArea) {
+  const polygons =
+    geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
+  const paths = [];
+  for (const rings of polygons) {
+    let d = "";
+    for (const ring of rings) {
+      if (ring.length < 4) continue;
+      const pts = ring.map(([lon, lat]) => toXY(lon, lat));
+      // shoelace area (outer rings positive, holes negative — abs for filter)
+      let area = 0;
+      for (let i = 0; i < pts.length - 1; i++)
+        area += pts[i][0] * pts[i + 1][1] - pts[i + 1][0] * pts[i][1];
+      if (Math.abs(area / 2) < minArea) continue;
+      // distance-based decimation, always keep first & last
+      const kept = [pts[0]];
+      for (let i = 1; i < pts.length - 1; i++) {
+        const last = kept[kept.length - 1];
+        const dx = pts[i][0] - last[0];
+        const dy = pts[i][1] - last[1];
+        if (dx * dx + dy * dy >= eps * eps) kept.push(pts[i]);
+      }
+      kept.push(pts[pts.length - 1]);
+      if (kept.length < 4) continue;
+      d +=
+        "M" +
+        kept
+          .map(
+            (p, i) =>
+              `${i ? "L" : ""}${p[0].toFixed(1)} ${p[1].toFixed(1)}`,
+          )
+          .join("") +
+        "Z";
+    }
+    if (d) paths.push(d);
+  }
+  return paths;
+}
+
+function bboxOf(paths) {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  for (const d of paths) {
+    const nums = d.match(/-?\d+(\.\d+)?/g);
+    for (let i = 0; i < nums.length; i += 2) {
+      const x = +nums[i],
+        y = +nums[i + 1];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  return { minX, minY, maxX, maxY };
+}
+
+const geo = await loadGeoJSON();
+
+const stateOutlines = geo.features.filter((f) => !f.properties.district);
+const districtFeatures = geo.features.filter((f) => f.properties.district);
+
+const stateNames = [
+  ...new Set([
+    ...stateOutlines.map((f) => f.properties.st_nm),
+    ...districtFeatures.map((f) => f.properties.st_nm),
+  ]),
+].sort();
+
+// ---------- States map ----------
+const stateEntries = [];
+for (const name of stateNames) {
+  const outline = stateOutlines.find((f) => f.properties.st_nm === name);
+  const feats = outline ? [outline] : districtFeatures.filter((f) => f.properties.st_nm === name);
+  const { toXY, width, height } = projectAll(feats, 1000);
+  const paths = feats.flatMap((f) =>
+    ringsToPaths(f.geometry, toXY, 0.45, 2.0),
+  );
+  const bb = bboxOf(paths);
+  stateEntries.push({
+    id: slugify(name),
+    name,
+    paths,
+    cx: +(((bb.minX + bb.maxX) / 2).toFixed(1)),
+    cy: +(((bb.minY + bb.maxY) / 2).toFixed(1)),
+  });
+  console.log(`${name}: ${paths.length} paths`);
+}
+const INDIA_HEIGHT = Math.max(
+  ...stateEntries.flatMap((s) =>
+    s.paths.map((d) => Math.max(...(d.match(/-?\d+(\.\d+)?/g) || ["0"]).map(Number).filter((_, i) => i % 2 === 1))),
+  ),
+);
+const indiaOut = {
+  width: 1000,
+  height: +INDIA_HEIGHT.toFixed(1),
+  states: stateEntries,
+};
+await writeFile(
+  path.join(ROOT, "src/data/india-states.ts"),
+  `// AUTO-GENERATED by scripts/generate-map-data.mjs — do not edit by hand.\nexport type IndiaState = { id: string; name: string; paths: string[]; cx: number; cy: number };\nexport const INDIA_MAP: { width: number; height: number; states: IndiaState[] } = ${JSON.stringify(indiaOut)};\n`,
+);
+console.log("Wrote src/data/india-states.ts");
+
+// ---------- District maps ----------
+const outDir = path.join(ROOT, "public/districts");
+await mkdir(outDir, { recursive: true });
+const manifest = [];
+for (const name of stateNames) {
+  const feats = districtFeatures.filter((f) => f.properties.st_nm === name);
+  if (!feats.length) continue;
+  const { toXY, width, height } = projectAll(feats, 800);
+  const byDistrict = new Map();
+  for (const f of feats) {
+    const dname = f.properties.district;
+    if (!byDistrict.has(dname)) byDistrict.set(dname, []);
+    byDistrict
+      .get(dname)
+      .push(...ringsToPaths(f.geometry, toXY, 0.5, 1.2));
+  }
+  const districts = [];
+  for (const [dname, paths] of byDistrict) {
+    if (!paths.length) continue;
+    const bb = bboxOf(paths);
+    districts.push({
+      name: dname,
+      slug: slugify(dname),
+      paths,
+      cx: +(((bb.minX + bb.maxX) / 2).toFixed(1)),
+      cy: +(((bb.minY + bb.maxY) / 2).toFixed(1)),
+    });
+  }
+  districts.sort((a, b) => a.name.localeCompare(b.name));
+  const sid = slugify(name);
+  const payload = { state: name, stateId: sid, width: 800, height: +height.toFixed(1), districts };
+  await Bun.write(path.join(outDir, `${sid}.json`), JSON.stringify(payload));
+  manifest.push({ id: sid, name, districts: districts.length });
+  console.log(`${name}: ${districts.length} districts`);
+}
+await Bun.write(
+  path.join(outDir, "index.json"),
+  JSON.stringify(manifest, null, 1),
+);
+console.log(`Wrote ${manifest.length} district maps + index.json`);

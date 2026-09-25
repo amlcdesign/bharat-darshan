@@ -80,19 +80,19 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.97 0.017 84);
+  --foreground: oklch(0.24 0.04 260);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --background: oklch(0.19 0.03 262);
+  --foreground: oklch(0.93 0.02 84);
+  --card: oklch(0.24 0.03 262);
+  --card-foreground: oklch(0.93 0.02 84);
+  --popover: oklch(0.24 0.03 262);
+  --popover-foreground: oklch(0.93 0.02 84);
+  --primary: oklch(0.78 0.14 75);
+  --primary-foreground: oklch(0.19 0.03 262);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -128,4 +128,128 @@
   html {
     @apply font-sans;
   }
+}
+
+@theme inline {
+  --font-display: var(--font-fraunces);
+}
+
+/* ---------- Bharat Explorer cartography theme ---------- */
+
+:root {
+  --ink: #16324f;
+  --ink-soft: #3d5573;
+  --marigold: #e8a33d;
+  --terracotta: #c4593a;
+  --paper: #f4ecdd;
+  --paper-deep: #ece1cb;
+  --sea: #cfe0dd;
+}
+
+.dark {
+  --ink: #d8e2ee;
+  --ink-soft: #97a8bd;
+  --marigold: #f0b355;
+  --terracotta: #e07a55;
+  --paper: #101b2c;
+  --paper-deep: #0b1322;
+  --sea: #1c2c44;
+}
+
+body {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 70% -10%, color-mix(in srgb, var(--marigold) 12%, transparent), transparent),
+    radial-gradient(ellipse 60% 50% at 0% 100%, color-mix(in srgb, var(--sea) 45%, transparent), transparent);
+  background-attachment: fixed;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(ellipse 80% 60% at 70% -10%, color-mix(in srgb, var(--marigold) 8%, transparent), transparent),
+    radial-gradient(ellipse 60% 50% at 0% 100%, color-mix(in srgb, var(--sea) 25%, transparent), transparent);
+}
+
+.font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+/* Map interactions */
+.state-shape {
+  fill: var(--state-fill, #8ca88f);
+  stroke: var(--paper);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+  transition: fill 0.18s ease, filter 0.18s ease;
+  cursor: pointer;
+}
+.dark .state-shape {
+  stroke: var(--paper-deep);
+}
+.state-group:hover .state-shape,
+.state-group:focus-visible .state-shape {
+  fill: var(--marigold);
+  filter: saturate(1.15);
+}
+.state-group.dimmed .state-shape {
+  opacity: 0.35;
+}
+
+.district-shape {
+  fill: var(--state-fill, #8ca88f);
+  stroke: var(--paper);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+  transition: fill 0.15s ease;
+  cursor: pointer;
+}
+.dark .district-shape {
+  stroke: var(--paper-deep);
+}
+.district-group:hover .district-shape,
+.district-group:focus-visible .district-shape {
+  fill: var(--terracotta);
+}
+.district-group.dimmed .district-shape {
+  opacity: 0.3;
+}
+
+.district-highlight .district-shape {
+  fill: var(--marigold);
+}
+
+.map-tooltip {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 14px));
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+  white-space: nowrap;
+}
+.map-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--ink);
+}
+
+.atlas-rule {
+  border-top: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+}
+
+.paper-card {
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 14px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent);
 }

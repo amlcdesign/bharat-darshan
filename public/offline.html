@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline · Bharat Explorer</title>
+    <style>
+      :root { --ink: #16324f; --paper: #f4ecdd; --marigold: #e8a33d; }
+      body {
+        margin: 0; min-height: 100vh; display: grid; place-items: center;
+        background: var(--paper); color: var(--ink);
+        font-family: Georgia, 'Times New Roman', serif; text-align: center; padding: 24px;
+      }
+      .card { max-width: 420px; }
+      .mark {
+        width: 72px; height: 72px; margin: 0 auto 20px; border-radius: 50%;
+        border: 3px solid var(--ink); display: grid; place-items: center;
+        font-size: 28px; color: var(--marigold);
+      }
+      h1 { font-size: 26px; margin: 0 0 8px; }
+      p { font-family: system-ui, sans-serif; font-size: 15px; line-height: 1.6; opacity: 0.75; }
+      a {
+        display: inline-block; margin-top: 18px; padding: 10px 22px; border-radius: 999px;
+        background: var(--ink); color: var(--paper); text-decoration: none;
+        font-family: system-ui, sans-serif; font-size: 14px; font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="mark">✦</div>
+      <h1>You are off the map</h1>
+      <p>
+        Bharat Explorer is offline right now. Pages you have already visited and
+        district maps you have opened are still available — everything else will
+        return once you are back online.
+      </p>
+      <a href="/">Try the atlas again</a>
+    </div>
+  </body>
+</html>

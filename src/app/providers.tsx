@@ -1,18 +1,17 @@
 "use client";
 
-import { Navbar } from "@/components/navbar";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryProvider } from "./query-provider";
+import { AppHeader } from "@/components/app-header";
+import { ServiceWorkerRegister } from "@/components/service-worker-register";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <QueryProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Navbar />
-        {children}
-      </TooltipProvider>
-    </QueryProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AppHeader />
+      {children}
+      <ServiceWorkerRegister />
+      <Toaster />
+    </ThemeProvider>
   );
 }
