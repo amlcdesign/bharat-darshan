@@ -136,14 +136,23 @@ const stateNames = [
   ]),
 ].sort();
 
-// ---------- States map ----------
-const stateEntries = [];
+// ---------- States map (single shared projection across all of India) ----------
+const featsByState = new Map();
 for (const name of stateNames) {
   const outline = stateOutlines.find((f) => f.properties.st_nm === name);
-  const feats = outline ? [outline] : districtFeatures.filter((f) => f.properties.st_nm === name);
-  const { toXY, width, height } = projectAll(feats, 1000);
+  const feats = outline
+    ? [outline]
+    : districtFeatures.filter((f) => f.properties.st_nm === name);
+  featsByState.set(name, feats);
+}
+const shared = projectAll(featsByState ? [...featsByState.values()].flat() : [], 1000);
+
+const stateEntries = [];
+for (const name of stateNames) {
+  const feats = featsByState.get(name);
+  const minArea = name === "Lakshadweep" ? 0.15 : 2.0;
   const paths = feats.flatMap((f) =>
-    ringsToPaths(f.geometry, toXY, 0.45, 2.0),
+    ringsToPaths(f.geometry, shared.toXY, 0.45, minArea),
   );
   const bb = bboxOf(paths);
   stateEntries.push({
@@ -153,13 +162,9 @@ for (const name of stateNames) {
     cx: +(((bb.minX + bb.maxX) / 2).toFixed(1)),
     cy: +(((bb.minY + bb.maxY) / 2).toFixed(1)),
   });
-  console.log(`${name}: ${paths.length} paths`);
+  console.log(`${name}: ${paths.length} paths @ (${bb.minX.toFixed(0)},${bb.minY.toFixed(0)})`);
 }
-const INDIA_HEIGHT = Math.max(
-  ...stateEntries.flatMap((s) =>
-    s.paths.map((d) => Math.max(...(d.match(/-?\d+(\.\d+)?/g) || ["0"]).map(Number).filter((_, i) => i % 2 === 1))),
-  ),
-);
+const INDIA_HEIGHT = shared.height;
 const indiaOut = {
   width: 1000,
   height: +INDIA_HEIGHT.toFixed(1),
