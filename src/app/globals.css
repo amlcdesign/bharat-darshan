@@ -195,6 +195,33 @@ body {
   opacity: 0.35;
 }
 
+/* Map insets for tiny states (Lakshadweep, Andaman & Nicobar) */
+.map-inset-frame {
+  fill: color-mix(in srgb, var(--sea) 55%, transparent);
+  stroke: var(--ink-soft);
+  stroke-width: 1.2;
+}
+.map-inset-leader {
+  stroke: var(--ink-soft);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 4;
+}
+.map-inset-label {
+  fill: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.map-inset-origin {
+  fill: var(--ink-soft);
+}
+.state-group.dimmed .map-inset-frame,
+.state-group.dimmed .map-inset-leader,
+.state-group.dimmed .map-inset-label,
+.state-group.dimmed .map-inset-origin {
+  opacity: 0.35;
+}
+
 .district-shape {
   fill: var(--state-fill, #8ca88f);
   stroke: var(--paper);
