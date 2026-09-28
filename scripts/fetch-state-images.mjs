@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 // slug -> iconic Wikipedia page (lead image is downloaded)
@@ -36,8 +36,8 @@ const ICONIC = {
   "tamil-nadu": "Brihadisvara Temple, Thanjavur",
   telangana: "Charminar",
   tripura: "Ujjayanta Palace",
-  "uttar-pradesh": "Taj Mahal",
-  uttarakhand: "Valley of Flowers National Park",
+  "uttar-pradesh": "Ram Mandir",
+  uttarakhand: "Kedarnath Temple",
   "west-bengal": "Victoria Memorial, Kolkata",
 };
 
@@ -76,9 +76,13 @@ async function fetchImage(src) {
 const outDir = path.resolve("public/states");
 await mkdir(outDir, { recursive: true });
 
-const credits = {};
+const only = process.argv.slice(2);
+const credits = await readFile(path.join(outDir, "credits.json"), "utf8")
+  .then((t) => JSON.parse(t))
+  .catch(() => ({}));
 let ok = 0;
 for (const [slug, title] of Object.entries(ICONIC)) {
+  if (only.length && !only.includes(slug)) continue;
   try {
     const data = await summary(title);
     const orig = data.originalimage?.source;
@@ -87,8 +91,8 @@ for (const [slug, title] of Object.entries(ICONIC)) {
 
     // build candidate URLs: capped thumb -> raw thumb -> original
     const candidates = [];
-    if (thumb && origW > 0 && origW < 800) candidates.push(thumb);
-    else if (thumb) candidates.push(thumb.replace(/\/\d+px-/, "/800px-"));
+    if (thumb && origW > 0 && origW < 960) candidates.push(thumb);
+    else if (thumb) candidates.push(thumb.replace(/\/\d+px-/, "/960px-"));
     if (thumb) candidates.push(thumb);
     if (orig) candidates.push(orig);
 
