@@ -1,14 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
 import "./globals.css";
-import { Geist, Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
-const fraunces = Fraunces({
-  subsets: ["latin"],
+const geist = localFont({
+  src: "./fonts/geist-latin.woff2",
+  variable: "--font-sans",
+  weight: "100 900",
+  display: "swap",
+});
+const fraunces = localFont({
+  src: "./fonts/fraunces-latin.woff2",
   variable: "--font-fraunces",
-  axes: ["SOFT", "WONK"],
+  weight: "100 900",
+  display: "swap",
 });
 
 export const dynamic = "force-dynamic";
