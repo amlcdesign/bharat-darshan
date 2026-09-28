@@ -154,9 +154,10 @@ export function IndiaMap({ query }: { query: string }) {
                 }
               }}
             >
-              {s.paths.map((d, j) => (
-                <path key={j} d={d} className="state-shape" />
-              ))}
+              {!inset &&
+                s.paths.map((d, j) => (
+                  <path key={j} d={d} className="state-shape" />
+                ))}
               {inset && (
                 <g aria-hidden="true">
                   <line

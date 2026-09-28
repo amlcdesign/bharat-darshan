@@ -197,7 +197,7 @@ body {
 
 /* Map insets for tiny states (Lakshadweep, Andaman & Nicobar) */
 .map-inset-frame {
-  fill: color-mix(in srgb, var(--sea) 55%, transparent);
+  fill: transparent;
   stroke: var(--ink-soft);
   stroke-width: 1.2;
 }
